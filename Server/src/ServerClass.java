@@ -7,23 +7,23 @@ import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ServerClass {
-    private static CopyOnWriteArrayList<ServerThread> all = new CopyOnWriteArrayList<ServerThread>();
+    private static CopyOnWriteArrayList<ServerThread> all = new CopyOnWriteArrayList<ServerThread>();//保存用户
 
     public static void main(String args[]) throws IOException {
 
-        ServerSocket server = null;
+        ServerSocket server = null;//创建嵌套字
         Socket OnServer = null;
         DataOutputStream out = null;
         DataInputStream in = null;
         Scanner reader = new Scanner(System.in);
         System.out.println("Waiting");
         server = new ServerSocket(8081);
-        try {
+        try {//等待连接
             while (true) {
                 OnServer = server.accept();
-                ServerThread a = new ServerThread(OnServer);
-                all.add(a);
-                new Thread(a).start();
+                ServerThread a = new ServerThread(OnServer);//每接收到一个连接就分出一个线程
+                all.add(a);//容器添加线程信息
+                new Thread(a).start();//运行子线程
 
             }
 
@@ -31,7 +31,7 @@ public class ServerClass {
         }
     }
 
-    static class ServerThread extends Thread {
+    static class ServerThread extends Thread {//服务子线程，继承Thread
         Socket OnServer = null;
 
         String name = null;
@@ -43,7 +43,7 @@ public class ServerClass {
             this.OnServer = OnServer;
         }
 
-        public void SetName(){
+        public void SetName(){//设置用户名字
             try {
                 in = new DataInputStream(OnServer.getInputStream());
                 out = new DataOutputStream(OnServer.getOutputStream());
@@ -51,7 +51,7 @@ public class ServerClass {
                 name = str;
                 System.out.println("客户端地址:" + OnServer.getInetAddress() + ": " + "用户名:" + str);
                 this.out.writeUTF("欢迎进入聊天室！\n当前在线人数：" + all.size());
-                for (ServerThread other : all) {
+                for (ServerThread other : all) {//在all中遍历，除了自己都发送进入信息
                     if (other == this) { //自己
                         continue;
                     } else {
@@ -66,20 +66,20 @@ public class ServerClass {
             }
         }
 
-        public boolean Send(boolean flag) {
+        public boolean Send(boolean flag) {//转发函数
             try {
                 in = new DataInputStream(OnServer.getInputStream());
                 out = new DataOutputStream(OnServer.getOutputStream());
                 String str = in.readUTF();
-                String[] temp = str.split("@");
-                boolean IsPrivate = false;
+                String[] temp = str.split("@");//判断要发送的信息是不是私聊信息
+                boolean IsPrivate = false;//用于判断私聊信息与否
                 String PrivateName=new String();
-                StringBuffer SendStr=new StringBuffer();
+                StringBuffer SendStr=new StringBuffer();//发送缓冲区
                 int index=0;
                 for (int i = 0; i < temp.length; ++i) {
                     for (ServerThread other : all) {
                         if (temp[i].compareTo(other.name)==0) {
-                            IsPrivate = true;
+                            IsPrivate = true;//判断为私聊
                             PrivateName=other.name;
                             index=i;
                         }
@@ -127,7 +127,7 @@ public class ServerClass {
 
                         }
                     }
-                    for (ServerThread other_ : all) {
+                    for (ServerThread other_ : all) {//退出后更新发送当前在线人数
                         other_.out.writeUTF("当前在线人数：" + all.size());
                     }
 
@@ -138,7 +138,7 @@ public class ServerClass {
             }
             return flag;
         }
-        public void PrivateChat(String PrivateName,String str) {
+        public void PrivateChat(String PrivateName,String str) {//私聊函数
             try {
                 System.out.println("客户端地址:" + OnServer.getInetAddress() + ": " + name +" 私聊"+PrivateName+":" + str);
                 for (ServerThread other : all) {
